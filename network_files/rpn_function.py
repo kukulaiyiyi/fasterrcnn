@@ -408,6 +408,7 @@ class RegionProposalNetwork(torch.nn.Module):
                 # 计算anchors与真实bbox的iou信息
                 # set to self.box_similarity when https://github.com/pytorch/pytorch/issues/27495 lands
                 match_quality_matrix = box_ops.box_iou(gt_boxes, anchors_per_image)
+
                 # 计算每个anchors与gt匹配iou最大的索引（如果iou<0.3索引置为-1，0.3<iou<0.7索引为-2）
                 matched_idxs = self.proposal_matcher(match_quality_matrix)
                 # get the targets corresponding GT for each proposal
@@ -524,7 +525,7 @@ class RegionProposalNetwork(torch.nn.Module):
             keep = torch.where(torch.ge(scores, self.score_thresh))[0]  # ge: >=
             boxes, scores, lvl = boxes[keep], scores[keep], lvl[keep]
 
-            # non-maximum suppression, independently done per level
+            #  non-maximum suppression, independently done per level 非最大抑制，每个级别独立完成
             keep = box_ops.batched_nms(boxes, scores, lvl, self.nms_thresh)
 
             # keep only topk scoring predictions
