@@ -57,7 +57,7 @@ def main():
 
     VOC_root = r"E:\my_code\deep-learning-for-image-processing-master\pytorch_object_detection"  # VOCdevkit
     aspect_ratio_group_factor = 3
-    batch_size = 4
+    batch_size = 32
 
     # check voc root
     if os.path.exists(os.path.join(VOC_root, "VOCdevkit")) is False:
@@ -171,7 +171,7 @@ def main():
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                                    step_size=3,
                                                    gamma=0.33)
-    num_epochs = 20
+    num_epochs = 10
     for epoch in range(init_epochs, num_epochs+init_epochs, 1):
         # train for one epoch, printing every 50 iterations
         mean_loss, lr = utils.train_one_epoch(model, optimizer, train_data_loader,
