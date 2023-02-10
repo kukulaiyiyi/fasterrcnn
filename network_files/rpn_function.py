@@ -434,6 +434,7 @@ class RegionProposalNetwork(torch.nn.Module):
                 inds_to_discard = matched_idxs == self.proposal_matcher.BETWEEN_THRESHOLDS  # -2
                 labels_per_image[inds_to_discard] = -1.0
 
+
             labels.append(labels_per_image)
             matched_gt_boxes.append(matched_gt_boxes_per_image)
         return labels, matched_gt_boxes
