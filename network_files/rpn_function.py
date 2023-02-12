@@ -151,7 +151,7 @@ class AnchorsGenerator(nn.Module):
             # shape: [grid_width*grid_height, 4]
             shifts = torch.stack([shift_x, shift_y, shift_x, shift_y], dim=1)
 
-            # For every (base anchor, output anchor) pair,，
+            # For every (base anchor, output anchor) pair
             # offset each zero-centered base anchor by the center of the output anchor.
             # 将anchors模板与原图上的坐标偏移量相加得到原图上所有anchors的坐标信息(shape不同时会使用广播机制)
             shifts_anchor = shifts.view(-1, 1, 4) + base_anchors.view(1, -1, 4)
