@@ -393,7 +393,7 @@ class RegionProposalNetwork(torch.nn.Module):
         Returns:
             labels: 标记anchors归属类别（1, 0, -1分别对应正样本，背景，废弃的样本）
                     注意，在RPN中只有前景和背景，所有正样本的类别都是1，0代表背景
-            matched_gt_boxes：与anchors匹配的gt
+            matched_gt_boxes：与anchors匹配的gt（非正样本的anchor也有匹配的信息，但后续计算不起作用）
         """
         labels = []
         matched_gt_boxes = []
@@ -407,9 +407,11 @@ class RegionProposalNetwork(torch.nn.Module):
             else:
                 # 计算anchors与真实bbox的iou信息
                 # set to self.box_similarity when https://github.com/pytorch/pytorch/issues/27495 lands
+                # match_quality_matrix = {Tensor:{num_gt_boxes,num_anchors}}，每行表示当前gt与所有anchor的iou大小
                 match_quality_matrix = box_ops.box_iou(gt_boxes, anchors_per_image)
 
                 # 计算每个anchors与gt匹配iou最大的索引（如果iou<0.3索引置为-1，0.3<iou<0.7索引为-2）
+                # matched_idxs = {Tensor:{num_anchors,}},每行代表当前该anchor与gt匹配iou的索引
                 matched_idxs = self.proposal_matcher(match_quality_matrix)
                 # get the targets corresponding GT for each proposal
                 # NB: need to clamp the indices because we can have a single
@@ -420,6 +422,9 @@ class RegionProposalNetwork(torch.nn.Module):
                 # 因为后面是通过labels_per_image变量来记录正样本位置的，
                 # 所以负样本和舍弃的样本对应的gt_boxes信息并没有什么意义，
                 # 反正计算目标边界框回归损失时只会用到正样本。
+
+                # matched_gt_boxes_per_image = {num_anchor,4}，表示每个anchor与之匹配的gt坐标信息
+                # 如果该anchor配判断为负样本或者舍弃样本，则存入索引为0的gt信息，这些对应的样本在后续计算没有意义，仅作占位
                 matched_gt_boxes_per_image = gt_boxes[matched_idxs.clamp(min=0)]
 
                 # 记录所有anchors匹配后的标签(正样本处标记为1，负样本处标记为0，丢弃样本处标记为-2)
@@ -566,7 +571,7 @@ class RegionProposalNetwork(torch.nn.Module):
         labels = torch.cat(labels, dim=0)
         regression_targets = torch.cat(regression_targets, dim=0)
 
-        # 计算边界框回归损失
+        # 计算边界框回归损失，正样本与对应的gt box
         box_loss = det_utils.smooth_l1_loss(
             pred_bbox_deltas[sampled_pos_inds],
             regression_targets[sampled_pos_inds],
@@ -574,7 +579,7 @@ class RegionProposalNetwork(torch.nn.Module):
             size_average=False,
         ) / (sampled_inds.numel())
 
-        # 计算目标预测概率损失
+        # 计算目标预测概率损失 二元交叉损失上函数
         objectness_loss = F.binary_cross_entropy_with_logits(
             objectness[sampled_inds], labels[sampled_inds]
         )
@@ -623,7 +628,11 @@ class RegionProposalNetwork(torch.nn.Module):
         num_anchors_per_level = [s[0] * s[1] * s[2] for s in num_anchors_per_level_shape_tensors]
 
         # 调整内部tensor格式以及shape
-        # bjectness, pred_bbox_deltas = (batch size * anchors, 1）,  (batch size * anchors, 4)
+        # objectness:
+        # (batch_size , num_cell_anchors, feature_w, feature_h) -> [N, -1, C]
+        # pred_bbox_deltas :
+        # (batch_size , 4 * num_cell_anchors, feature_w, feature_h) -> [4*N, -1, C]
+
         objectness, pred_bbox_deltas = concat_box_prediction_layers(objectness,
                                                                     pred_bbox_deltas)
 

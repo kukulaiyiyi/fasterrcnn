@@ -159,8 +159,8 @@ class BoxCoder(object):
         """
         结合anchors和与之对应的gt计算regression参数
         Args:
-            reference_boxes: List[Tensor] 每个proposal/anchor对应的gt_boxes
-            proposals: List[Tensor] anchors/proposals
+            reference_boxes: List[Tensor] 每个proposal/anchor对应的gt_boxes (batch_size,num_anchors,4)
+            proposals: List[Tensor] anchors/proposals (batch_size,num_anchors,4)
 
         Returns: regression parameters
 
@@ -168,8 +168,8 @@ class BoxCoder(object):
         # 统计每张图像的anchors个数，方便后面拼接在一起处理后在分开
         # reference_boxes和proposal数据结构相同
         boxes_per_image = [len(b) for b in reference_boxes]
-        reference_boxes = torch.cat(reference_boxes, dim=0)
-        proposals = torch.cat(proposals, dim=0)
+        reference_boxes = torch.cat(reference_boxes, dim=0)     # (batch_size * num_anchors, 4)
+        proposals = torch.cat(proposals, dim=0)                 # (batch_size * num_anchors, 4)
 
         # targets_dx, targets_dy, targets_dw, targets_dh
         targets = self.encode_single(reference_boxes, proposals)
@@ -401,7 +401,8 @@ def smooth_l1_loss(input, target, beta: float = 1. / 9, size_average: bool = Tru
     the extra beta parameter
     """
     n = torch.abs(input - target)
-    # cond = n < beta
+    # cond = n < beta 判断差值是否小于β,若小于则使用0.5βn**2，否则n-0.5*β
+    #这里的loss function与Fast RCNN的损失函数的差别在于判断条件β，前者β为1，而后者这里设为1./9
     cond = torch.lt(n, beta)
     loss = torch.where(cond, 0.5 * n ** 2 / beta, n - 0.5 * beta)
     if size_average:
