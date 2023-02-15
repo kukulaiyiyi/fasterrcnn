@@ -225,6 +225,8 @@ class RoIHeads(torch.nn.Module):
 
         # get matching gt indices for each proposal
         # 为每个proposal匹配对应的gt_box，并划分到正负样本中
+        # matched_idxs保存的是与groudtruth匹配的id（没有匹配上的默认id=0）
+        # labels {-1(舍弃), 0(背景), 1, ... ,n }
         matched_idxs, labels = self.assign_targets_to_proposals(proposals, gt_boxes, gt_labels)
         # sample a fixed proportion of positive-negative proposals
         # 按给定数量和比例采样正负样本

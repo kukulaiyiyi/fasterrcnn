@@ -57,7 +57,7 @@ def main():
 
     VOC_root = r"E:\my_code\deep-learning-for-image-processing-master\pytorch_object_detection"  # VOCdevkit
     aspect_ratio_group_factor = 3
-    batch_size = 32
+    batch_size = 2
 
     # check voc root
     if os.path.exists(os.path.join(VOC_root, "VOCdevkit")) is False:

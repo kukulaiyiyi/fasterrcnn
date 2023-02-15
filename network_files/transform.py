@@ -236,6 +236,7 @@ class GeneralizedRCNNTransform(nn.Module):
         # type: (...) -> Tuple[ImageList, Optional[List[Dict[str, Tensor]]]]
         images = [img for img in images]
         for i in range(len(images)):
+
             image = images[i]
             target_index = targets[i] if targets is not None else None
 
