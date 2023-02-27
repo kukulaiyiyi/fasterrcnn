@@ -120,11 +120,9 @@ class RoIHeads(torch.nn.Module):
                 # background image
                 device = proposals_in_image.device
                 clamped_matched_idxs_in_image = torch.zeros(
-                    (proposals_in_image.shape[0],), dtype=torch.int64, device=device
-                )
+                    (proposals_in_image.shape[0],), dtype=torch.int64, device=device)
                 labels_in_image = torch.zeros(
-                    (proposals_in_image.shape[0],), dtype=torch.int64, device=device
-                )
+                    (proposals_in_image.shape[0],), dtype=torch.int64, device=device)
             else:
                 #  set to self.box_similarity when https://github.com/pytorch/pytorch/issues/27495 lands
                 # 计算proposal与每个gt_box的iou重合度
